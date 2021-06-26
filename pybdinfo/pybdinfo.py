@@ -1,17 +1,19 @@
-import os, subprocess, datetime
+import os, datetime, platform
+from pybdinfo.utils import run_exe
 
-TMP = r'D:\tmp'
+TMP = None
+if platform.system() == 'Windows':
+    TMP = r'D:\tmp'
+elif platform.system() == 'Linux':
+    TMP = '/media/ferb/Data/tmp'
+if not TMP:
+    sys.exit()
 
 class BDInfo():
     def __init__(self):
         self.exec = os.path.normpath(os.path.join(os.path.dirname(__file__), 'binaries/BDInfoCLI-ng_v0.7.5.5/BDInfo.exe'))
         self.path = None
         self.is_iso = False
-
-    def test(self):
-        process = subprocess.Popen(self.exec, shell=True, stdout=subprocess.PIPE)
-        process.wait()
-        print(process.returncode)
 
     def open(self, path):
         if not os.path.exists(path):
@@ -31,7 +33,7 @@ class BDInfo():
         args = [self.exec, '--list', self.path]
         if self.is_iso:
             args.append(os.path.dirname(self.path))
-        process = subprocess.Popen(args=args, shell=True, stdout=subprocess.PIPE)
+        process = run_exe(args)
         process.wait()
         started = False
         playlists = []
@@ -39,19 +41,19 @@ class BDInfo():
             line = process.stdout.readline()
             if not line:
                 break
-            elif '#' in line.decode() and \
-                'Group' in line.decode() and \
-                'Playlist' in line.decode() and \
-                'File' in line.decode() and \
-                'Length' in line.decode() and \
-                'Estimated Bytes' in line.decode() and \
-                'Measured Bytes' in line.decode():
+            elif '#' in line and \
+                'Group' in line and \
+                'Playlist' in line and \
+                'File' in line and \
+                'Length' in line and \
+                'Estimated Bytes' in line and \
+                'Measured Bytes' in line:
                 started = True
                 continue
             elif started:
-                playlist_raw = line.decode().split()
+                playlist_raw = line.split()
                 if len(playlist_raw) == 6:
-                    playlists.append(PlaylistOverview(line.decode().split()))
+                    playlists.append(PlaylistOverview(line.split()))
                 continue
         return playlists
     
@@ -61,7 +63,7 @@ class BDInfo():
                 if element.startswith('BDINFO.') and element.endswith('.txt'):
                     os.remove(os.path.join(TMP, element))
         args = [self.exec, '--mpls', playlist, self.path, TMP]
-        process = subprocess.Popen(args=args, stdout=subprocess.PIPE, universal_newlines=True)
+        process = run_exe(args)
         while process.poll() is None:
             if callback is not None:
                 try:

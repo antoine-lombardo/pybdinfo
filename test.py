@@ -1,18 +1,34 @@
 from pybdinfo import BDInfo, PlaylistDetails
-import os
+import os, platform, sys
+
+data_dir = None
+if platform.system() == 'Windows':
+    data_dir = 'D:\\'
+elif platform.system() == 'Linux':
+    data_dir = '/media/ferb/Data/'
+if not data_dir:
+    sys.exit()
+
+iso_file = os.path.join(data_dir + 'Ip.Man.Kung.Fu.Master.2019.BluRay.1080p.AVC.DTS-HD.MA5.1-CHDBits.iso')
+report_file = os.path.join(data_dir + 'BDINFO.Ip.Man.Kung.Fu.Master.2019.BluRay.1080p.AVC.DTS-HD.MA5.1-CHDBits.txt')
+
 
 def progress_callback(percent, elapsed, remaining):
     print('{}%, {} / {}'.format(str(percent), elapsed.strftime("%H:%M:%S"), remaining.strftime("%H:%M:%S")))
 
 bdinfo = BDInfo()
-bdinfo.open(r'D:\Ip.Man.Kung.Fu.Master.2019.BluRay.1080p.AVC.DTS-HD.MA5.1-CHDBits.iso')
+bdinfo.open(iso_file)
 
-bdinfo.scan_playlist('00000.mpls', progress_callback)
+for playlist in bdinfo.get_playlists():
+    print(playlist.to_string())
+
+
+bdinfo.scan_playlist(bdinfo.get_playlists()[0].file, progress_callback)
 
 
 
 report = None
-with open(r'D:\BDINFO.Ip.Man.Kung.Fu.Master.2019.BluRay.1080p.AVC.DTS-HD.MA5.1-CHDBits.txt', encoding='utf-8') as file:
+with open(report_file, encoding='utf-8') as file:
     report = PlaylistDetails(file.read().splitlines())
 
 for video_track in report.get_video_streams():
