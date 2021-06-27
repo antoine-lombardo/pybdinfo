@@ -1,16 +1,12 @@
 import os, datetime, platform
 from pybdinfo.utils import run_exe
-
-TMP = None
-if platform.system() == 'Windows':
-    TMP = r'D:\tmp'
-elif platform.system() == 'Linux':
-    TMP = '/media/ferb/Data/tmp'
-if not TMP:
-    sys.exit()
+from pybdinfo.languages import lang_to_code, code_to_lang
+from pybdinfo.codecs import name_to_codec
+from pybdinfo.video_description import extract_videoformat, extract_framerate, extract_aspectratio, extract_profile, extract_level
 
 class BDInfo():
-    def __init__(self):
+    def __init__(self, tmp_dir):
+        self.tmp_dir = tmp_dir
         self.exec = os.path.normpath(os.path.join(os.path.dirname(__file__), 'binaries/BDInfoCLI-ng_v0.7.5.5/BDInfo.exe'))
         self.path = None
         self.is_iso = False
@@ -58,11 +54,11 @@ class BDInfo():
         return playlists
     
     def scan_playlist(self, playlist, callback = None):
-        for element in os.listdir(TMP):
-            if os.path.isfile(os.path.join(TMP, element)):
+        for element in os.listdir(self.tmp_dir):
+            if os.path.isfile(os.path.join(self.tmp_dir, element)):
                 if element.startswith('BDINFO.') and element.endswith('.txt'):
-                    os.remove(os.path.join(TMP, element))
-        args = [self.exec, '--mpls', playlist, self.path, TMP]
+                    os.remove(os.path.join(self.tmp_dir, element))
+        args = [self.exec, '--mpls', playlist, self.path, self.tmp_dir]
         process = run_exe(args)
         while process.poll() is None:
             if callback is not None:
@@ -80,12 +76,12 @@ class BDInfo():
                     callback(percent, elapsed, remaining)
                 except: continue
         report = []
-        for element in os.listdir(TMP):
-            if os.path.isfile(os.path.join(TMP, element)):
+        for element in os.listdir(self.tmp_dir):
+            if os.path.isfile(os.path.join(self.tmp_dir, element)):
                 if element.startswith('BDINFO.') and element.endswith('.txt'):
-                    with open(os.path.join(TMP, element), encoding='utf-8') as file:
+                    with open(os.path.join(self.tmp_dir, element), encoding='utf-8') as file:
                         report = file.read().splitlines()
-                    os.remove(os.path.join(TMP, element))
+                    os.remove(os.path.join(self.tmp_dir, element))
         return PlaylistDetails(report)
         
 
@@ -316,8 +312,26 @@ class VideoTrack():
         self.bitrate = bitrate
         self.description = description
 
+    def codec_code(self):
+        return name_to_codec(self.codec)
+
+    def videoformat(self):
+        return extract_videoformat(self.description)
+
+    def framerate(self):
+        return extract_framerate(self.description)
+
+    def aspectratio(self):
+        return extract_aspectratio(self.description)
+
+    def profile(self):
+        return extract_profile(self.description)
+
+    def level(self):
+        return extract_level(self.description)
+
     def to_string(self):
-        return '{} / {} kbps / {}'.format(self.codec, str(self.bitrate), self.description)
+        return '{} ({}) / {} kbps / {} {} {} {} {}'.format(self.codec, self.codec_code(), str(self.bitrate), self.videoformat(), self.framerate(), self.aspectratio(), self.profile(), self.level())
 
 class AudioTrack():
     def __init__(self, codec, language, bitrate, description):
@@ -326,8 +340,14 @@ class AudioTrack():
         self.bitrate = bitrate
         self.description = description
 
+    def codec_code(self):
+        return name_to_codec(self.codec)
+
+    def lang_code(self):
+        return lang_to_code(self.language)
+
     def to_string(self):
-        return '{} / {} / {} kbps / {}'.format(self.codec, self.language, str(self.bitrate), self.description)
+        return '{} ({}) / {} ({}) / {} kbps / {}'.format(self.codec, self.codec_code(), self.language, self.lang_code(), str(self.bitrate), self.description)
 
 class SubtitlesTrack():
     def __init__(self, codec, language, bitrate, description):
@@ -335,9 +355,15 @@ class SubtitlesTrack():
         self.language = language
         self.bitrate = bitrate
         self.description = description
+    
+    def codec_code(self):
+        return name_to_codec(self.codec)
+
+    def lang_code(self):
+        return lang_to_code(self.language)
 
     def to_string(self):
-        return '{} / {} / {} kbps / {}'.format(self.codec, self.language, str(self.bitrate), self.description)
+        return '{} ({}) / {} ({}) / {} kbps / {}'.format(self.codec, self.codec_code(), self.language, self.lang_code(), str(self.bitrate), self.description)
 
 class File():
     def __init__(self, name, time_in, length, size, bitrate):

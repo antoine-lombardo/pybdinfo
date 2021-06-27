@@ -16,14 +16,14 @@ report_file = os.path.join(data_dir + 'BDINFO.Ip.Man.Kung.Fu.Master.2019.BluRay.
 def progress_callback(percent, elapsed, remaining):
     print('{}%, {} / {}'.format(str(percent), elapsed.strftime("%H:%M:%S"), remaining.strftime("%H:%M:%S")))
 
-bdinfo = BDInfo()
+bdinfo = BDInfo(os.path.join(data_dir, 'tmp'))
 bdinfo.open(iso_file)
 
 for playlist in bdinfo.get_playlists():
     print(playlist.to_string())
 
 
-bdinfo.scan_playlist(bdinfo.get_playlists()[0].file, progress_callback)
+#bdinfo.scan_playlist(bdinfo.get_playlists()[0].file, progress_callback)
 
 
 
@@ -49,3 +49,7 @@ for chapter in report.get_chapters():
 print(report.get_infos().to_string())
 
 print(report.get_report().to_string())
+
+print(report.detailed())
+
+print(report.summary())
