@@ -11,7 +11,7 @@ elif platform.system() == 'Linux':
 if not data_dir:
     sys.exit()
 
-iso_file = os.path.join(data_dir + 'Ip.Man.Kung.Fu.Master.2019.BluRay.1080p.AVC.DTS-HD.MA5.1-CHDBits.iso')
+iso_file = os.path.join(data_dir, 'Ip.Man.Kung.Fu.Master.2019.BluRay.1080p.AVC.DTS-HD.MA5.1-CHDBits.iso')
 report_path = r'C:\Users\Ferb\Desktop\report.txt'
 
 def progress_callback(percent, elapsed, remaining):
