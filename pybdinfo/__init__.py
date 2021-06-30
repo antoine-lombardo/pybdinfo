@@ -1,1 +1,1 @@
-from pybdinfo.pybdinfo import BDInfo, PlaylistDetails
+from pybdinfo.pybdinfo import BDInfo, Report
